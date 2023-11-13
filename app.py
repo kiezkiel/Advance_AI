@@ -57,7 +57,7 @@ service_context = ServiceContext.from_defaults(
 # and set the service context actually passing service_context 
 set_global_service_context(service_context)
 
-prompt = input("Please enter your question ")
+prompt = st.text_input("Please enter your question ")
 
 inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
 
@@ -73,8 +73,8 @@ inputs = inputs.to(torch.float32)# Convert the model and inputs to 32-bit precis
 output = model.generate(**inputs, streamer=streamer,use_cache=True, max_new_tokens=float('inf')) 
 
 st.title('Shinzou Sasageyou [write your things]')
-prompts = st.text_input("Write your question here")
 
-if prompts:
-    response = query_engine.query(prompts)
+
+if prompt:
+    response = query_engine.query(prompt)
     st.write(response)
