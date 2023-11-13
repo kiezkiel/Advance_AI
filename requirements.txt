@@ -1,0 +1,5 @@
+streamlit
+transformers
+torch
+llama_index
+pathlib
