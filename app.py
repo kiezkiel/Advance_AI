@@ -20,13 +20,19 @@ from llama_index import ServiceContext
 from pathlib import Path
 
 # set meta llma variable to hold llama2 weights naming 
-name = "meta-llama/Llama-2-13b-chat-hf"
+name = "meta-llama/Llama-2-7b-chat-hf"
 #set auth tokenizer variable from hugging face
 auth_token = "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"
 
-# creating autotokenizer
-tokenizer = AutoTokenizer.from_pretrained(name, cache_dir = './models/', use_auth_token = auth_token)
-model = AutoModelForCausalLM.from_pretrained(name,cache_dir = './models/', use_auth_token= auth_token, torch_dtype = torch.float32, rope_scaling={"type": "dynamic", "factor": 2}, load_in_8bit=False)
+@st.cache_resource
+def get_tokenizer_model():
+    tokenizer = AutoTokenizer.from_pretrained(name, cache_dir = './models/', use_auth_token = auth_token)
+    model = AutoModelForCausalLM.from_pretrained(name,cache_dir = './models/', use_auth_token= auth_token, torch_dtype = torch.float32, rope_scaling={"type": "dynamic", "factor": 2}, load_in_8bit=False)
+
+
+    return tokenizer, model
+tokenizer, model = get_tokenizer_model()
+
 
 #create a system prompt
 system_promt = """<s>[INST] <<SYS>> you are a helpful, resecful and honest assistant <</SYS>> """
@@ -57,7 +63,6 @@ service_context = ServiceContext.from_defaults(
 # and set the service context actually passing service_context 
 set_global_service_context(service_context)
 
-prompt = st.text_input("Please enter your question ")
 
 inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
 
@@ -73,8 +78,14 @@ inputs = inputs.to(torch.float32)# Convert the model and inputs to 32-bit precis
 output = model.generate(**inputs, streamer=streamer,use_cache=True, max_new_tokens=float('inf')) 
 
 st.title('Shinzou Sasageyou [write your things]')
+prompt = st.text_input("Please enter your question ")
 
 
 if prompt:
     response = query_engine.query(prompt)
     st.write(response)
+
+    with st.expander('Response Object'):
+        st.write(response)
+    with st.expander('source Text'):
+        st.write(response.get_formatted_sources())
